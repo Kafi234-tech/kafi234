@@ -1,0 +1,43 @@
+import streamlit as st
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+import yagmail
+
+# Google Sheet setup
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
+client = gspread.authorize(creds)
+
+sheet = client.open("User Data Collection").sheet1  # Use your Google Sheet name
+
+# Gmail setup
+receiver_email = "atikshariare.ac@gmail.com"
+yag = yagmail.SMTP("your_email@gmail.com", "your_app_password")  # Use App Password
+
+# Streamlit UI
+st.title("User Info Collection Form")
+
+name = st.text_input("Name")
+college = st.text_input("College Name")
+mobile = st.text_input("Mobile Number")
+email = st.text_input("Email")
+
+if st.button("Submit"):
+    if name and college and mobile and email:
+        # Save to Google Sheet
+        sheet.append_row([name, college, mobile, email])
+
+        # Send email
+        message = f"""
+        New Submission:
+
+        Name: {name}
+        College: {college}
+        Mobile: {mobile}
+        Email: {email}
+        """
+        yag.send(to=receiver_email, subject="New User Submission", contents=message)
+
+        st.success("Data submitted successfully!")
+    else:
+        st.error("Please fill out all fields.")
